@@ -6,7 +6,8 @@ const routes = (app) => {
     "/api/auth",
     createProxyMiddleware({
       target: process.env.AUTH_SERVICE,
-      changeOrigin: true
+      changeOrigin: true,
+      pathRewrite: (path) => `/api/auth${path}`
     })
   );
 
@@ -14,7 +15,8 @@ const routes = (app) => {
     "/api/sessions",
     createProxyMiddleware({
       target: process.env.SESSION_SERVICE,
-      changeOrigin: true
+      changeOrigin: true,
+      pathRewrite: (path) => `/api/sessions${path}`
     })
   );
 
@@ -22,7 +24,8 @@ const routes = (app) => {
     "/api/orders",
     createProxyMiddleware({
       target: process.env.ORDER_SERVICE,
-      changeOrigin: true
+      changeOrigin: true,
+      pathRewrite: (path) => `/api/orders${path}`
     })
   );
 
@@ -30,7 +33,8 @@ const routes = (app) => {
     "/api/exit",
     createProxyMiddleware({
       target: process.env.EXIT_SERVICE,
-      changeOrigin: true
+      changeOrigin: true,
+      pathRewrite: (path) => `/api/exit${path}`
     })
   );
 

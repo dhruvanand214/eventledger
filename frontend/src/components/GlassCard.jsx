@@ -1,6 +1,6 @@
 export default function GlassCard({ children }) {
   return (
-    <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-6 shadow-xl">
+    <div className="rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-xl">
       {children}
     </div>
   );

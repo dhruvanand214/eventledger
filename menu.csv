@@ -1,0 +1,47 @@
+Beer,Kingfisher Pint,250
+Beer,Budweiser Magnum,300
+Beer,Corona Bottle,450
+Beer,Heineken Bottle,400
+Beer,Carlsberg Smooth,350
+Beer,Tuborg Green,280
+
+Whisky,Jameson,500
+Whisky,Jack Daniels,700
+Whisky,Black Label,650
+Whisky,Chivas Regal,750
+Whisky,Blenders Pride,350
+Whisky,Royal Stag,300
+
+Vodka,Absolut,600
+Vodka,Smirnoff,350
+Vodka,Magic Moments,300
+Vodka,Grey Goose,900
+
+Rum,Bacardi White,400
+Rum,Old Monk,250
+Rum,Captain Morgan,450
+
+Cocktails,Mojito,450
+Cocktails,Margarita,500
+Cocktails,Cosmopolitan,550
+Cocktails,Pina Colada,500
+Cocktails,Long Island Iced Tea,650
+
+Shots,Tequila Shot,300
+Shots,Jager Bomb,450
+Shots,Vodka Shot,250
+
+Soft Drinks,Coke,100
+Soft Drinks,Pepsi,100
+Soft Drinks,Red Bull,200
+Soft Drinks,Soda,80
+
+Food,Chicken Wings,450
+Food,Paneer Tikka,400
+Food,French Fries,250
+Food,Chicken Nuggets,350
+Food,Margherita Pizza,500
+Food,Pepperoni Pizza,650
+
+Water,Mineral Water,50
+Water,Sparkling Water,120

@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --names auth,session,order,exit,dashboard,gateway,frontend --prefix-colors cyan,green,blue,magenta,yellow,red,white \"npm run dev --prefix auth-service\" \"npm run dev --prefix session-service\" \"npm run dev --prefix order-service\" \"npm run dev --prefix exit-service\" \"npm run dev --prefix dashboard-service\" \"npm run dev --prefix gateway-service\" \"npm run dev --prefix frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
