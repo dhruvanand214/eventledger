@@ -10,6 +10,10 @@ const { initSocket, emitEvent } = require("./socket/socketServer");
 const app = express();
 app.use(cors());
 
+app.get("/health", (req, res) => {
+  res.json({ status: "Dashboard service running" });
+});
+
 const server = http.createServer(app);
 
 initSocket(server);
