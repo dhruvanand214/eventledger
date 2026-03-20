@@ -16,7 +16,10 @@ const redisClient = normalizedRedisUrl
   : createClient({
       socket: {
         host: process.env.REDIS_HOST,
-        port: process.env.REDIS_PORT
+        port: process.env.REDIS_PORT,
+        keepAlive: 5000,
+        connectTimeout: 10000,
+        reconnectStrategy: (retries) => Math.min(retries * 200, 3000)
       }
     });
 
@@ -25,8 +28,15 @@ redisClient.on("error", (err) => {
 });
 
 const connectRedis = async () => {
+  if (redisClient.isOpen) return;
   await redisClient.connect();
   console.log("Auth Redis Connected");
 };
 
-module.exports = { redisClient, connectRedis };
+const ensureRedisConnected = async () => {
+  if (!redisClient.isOpen) {
+    await connectRedis();
+  }
+};
+
+module.exports = { redisClient, connectRedis, ensureRedisConnected };

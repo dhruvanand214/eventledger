@@ -10,15 +10,22 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-connectDB();
-connectRedis();
-
 app.use("/api/sessions", require("./routes/sessionRoutes"));
 
 app.get("/health", (req, res) => {
   res.json({ status: "Auth Service Running" });
 });
 
-app.listen(process.env.PORT, () => {
-  console.log(`Auth Service running on port ${process.env.PORT}`);
+const startServer = async () => {
+  await connectDB();
+  await connectRedis();
+
+  app.listen(process.env.PORT, () => {
+    console.log(`Session service running on port ${process.env.PORT}`);
+  });
+};
+
+startServer().catch((error) => {
+  console.error("Session service startup failed:", error);
+  process.exit(1);
 });

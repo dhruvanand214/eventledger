@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { redisClient } = require("../config/redis");
+const { redisClient, ensureRedisConnected } = require("../config/redis");
 
 exports.protect = async (req, res, next) => {
   try {
@@ -14,6 +14,7 @@ exports.protect = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Check token in Redis
+    await ensureRedisConnected();
     const storedToken = await redisClient.get(`auth:${decoded.id}`);
 
     if (!storedToken || storedToken !== token) {
@@ -39,6 +40,7 @@ exports.authorize = (...roles) => {
 
 exports.logout = async (req, res) => {
   try {
+    await ensureRedisConnected();
     await redisClient.del(`auth:${req.user.id}`);
     res.json({ message: "Logged out successfully" });
   } catch (error) {

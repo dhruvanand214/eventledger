@@ -11,15 +11,22 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-connectDB();
-connectRedis();
-
 app.use("/api/exit", require("./routes/exitRoutes"));
 
 app.get("/health", (req, res) => {
   res.json({ status: "Exit service running" });
 });
 
-app.listen(process.env.PORT, () => {
-  console.log(`Exit service running on ${process.env.PORT}`);
+const startServer = async () => {
+  await connectDB();
+  await connectRedis();
+
+  app.listen(process.env.PORT, () => {
+    console.log(`Exit service running on ${process.env.PORT}`);
+  });
+};
+
+startServer().catch((error) => {
+  console.error("Exit service startup failed:", error);
+  process.exit(1);
 });

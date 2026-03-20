@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
-const { redisClient } = require("../config/redis");
+const { redisClient, ensureRedisConnected } = require("../config/redis");
 
 const SALT_ROUNDS = 10;
 const TOKEN_TTL_SECONDS = 60 * 60 * 8;
@@ -24,6 +24,7 @@ const signToken = (user) =>
   );
 
 const saveSessionToken = async (userId, token) => {
+  await ensureRedisConnected();
   await redisClient.set(`auth:${userId}`, token, {
     EX: TOKEN_TTL_SECONDS
   });

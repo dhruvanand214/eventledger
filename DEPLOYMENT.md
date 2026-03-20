@@ -167,3 +167,11 @@ Verify these URLs after deployment:
 - Socket.io client now reads `VITE_DASHBOARD_URL`; keep that URL public and stable.
 - Frontend now reads `VITE_API_URL`; do not leave it pointed at localhost in production.
 - If your Redis provider gives only host and port, you can still use `REDIS_HOST` and `REDIS_PORT`, but `REDIS_URL` is the preferred production setup.
+
+PORT=5000
+
+SESSION_SERVICE=sessionservice-production.up.railway.app
+AUTH_SERVICE=authservice-production-ab7e.up.railway.app
+ORDER_SERVICE=orderservice-production-2f0a.up.railway.app
+EXIT_SERVICE=exitservice-production.up.railway.app
+DASHBOARD_SERVICE=dashboardservice-production-bf7b.up.railway.app

@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { redisClient } = require("../config/redis");
+const { redisClient, ensureRedisConnected } = require("../config/redis");
 
 exports.protect = async (req, res, next) => {
   try {
@@ -12,6 +12,7 @@ exports.protect = async (req, res, next) => {
     const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    await ensureRedisConnected();
     const storedToken = await redisClient.get(`auth:${decoded.id}`);
 
     if (!storedToken || storedToken !== token) {
