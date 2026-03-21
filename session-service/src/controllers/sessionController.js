@@ -2,6 +2,7 @@ const { redisClient } = require("../config/redis");
 const { v4: uuidv4 } = require("uuid");
 const QRCode = require("qrcode");
 const publishEvent = require("../events/publisher");
+const DemoSession = require("../models/DemoSession");
 
 const getContext = (req) => ({
   clubId: req.user?.clubId || "default-club",
@@ -53,6 +54,44 @@ exports.createSession = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Session creation failed" });
+  }
+};
+
+exports.createDemoSession = async (req, res) => {
+  try {
+    const { customerName } = req.body;
+
+    if (!customerName?.trim()) {
+      return res.status(400).json({ message: "customerName is required" });
+    }
+
+    const sessionId = uuidv4();
+    const { clubId, clubName, eventId, eventName } = getContext(req);
+    const qrCode = await QRCode.toDataURL(sessionId);
+
+    const demoSession = await DemoSession.create({
+      sessionId,
+      customerName: customerName.trim(),
+      qrCode,
+      clubId,
+      clubName,
+      eventId,
+      eventName,
+      createdById: req.user?.id || null,
+      createdByName: req.user?.name || null,
+      createdByRole: req.user?.role || null
+    });
+
+    res.status(201).json({
+      message: "Demo session created",
+      sessionId: demoSession.sessionId,
+      customerName: demoSession.customerName,
+      qrCode: demoSession.qrCode,
+      createdAt: demoSession.createdAt
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Demo session creation failed" });
   }
 };
 

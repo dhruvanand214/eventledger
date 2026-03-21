@@ -4,6 +4,7 @@ const sessionController = require("../controllers/sessionController");
 const { protect } = require("../middlewares/authMiddleware");
 
 router.post("/", protect, sessionController.createSession);
+router.post("/demo", protect, sessionController.createDemoSession);
 router.get("/", protect, sessionController.getActiveSessions);
 router.get("/:sessionId", protect, sessionController.getSession);
 
