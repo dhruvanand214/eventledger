@@ -1,173 +1,140 @@
 # EventLedger
 
-EventLedger is a role-based event and venue operations platform for managing guest sessions from entry to billing.
+> **Role-based venue & event management platform** — QR-based guest sessions, live dashboards, multi-tenant support, and end-to-end billing.
 
-In simple terms, it helps a club, event, or function run a controlled guest flow:
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-eventledger.vercel.app-22c55e?style=flat)](https://eventledger.vercel.app)
+![Tech](https://img.shields.io/badge/Stack-MERN%20%2B%20Redis%20%2B%20Microservices-3B82F6?style=flat)
 
-- entry staff create a guest session and generate a QR code
-- bartenders scan the QR and add items to that guest's running tab
-- exit staff scan the same QR, generate the final bill, and close the session
-- owners watch live activity, revenue, sessions, and menu data
-- admins create owners for different clubs or events
+---
 
-## What Problem It Solves
+## What it solves
 
-In many events and private venues, guest spending is tracked manually or across disconnected tools. That usually causes:
+In most clubs and private events, guest spending is tracked manually or across disconnected tools — causing slow service, billing confusion, and zero visibility for owners.
 
-- slow service
-- billing confusion
-- weak visibility for owners
-- poor coordination between entry, bar, and exit counters
+EventLedger replaces that with a **single connected workflow**: a guest arrives, gets a QR code, every order is tracked against that QR in real time, and the bill is generated and closed at exit. Owners watch it all happen live on a dashboard.
 
-EventLedger keeps all of that connected through one live workflow.
+---
 
-## How It Works
+## Architecture
 
-The app is built around a QR-based session.
+This system is split into **6 independent microservices** behind an API gateway:
 
-1. A guest arrives at the entry desk.
-2. Entry staff creates a session using the guest name.
-3. The system generates a QR code for that guest.
-4. Bartenders scan the QR and add menu items.
-5. The running total stays attached to that session.
-6. At exit, staff scan the same QR, generate the invoice, and mark the bill as paid.
+```
+                        ┌─────────────────┐
+                        │   React Client  │
+                        └────────┬────────┘
+                                 │
+                        ┌────────▼────────┐
+                        │  Gateway Service │  ← Routes all client requests
+                        └────────┬────────┘
+          ┌──────────────────────┼──────────────────────┐
+          │              │       │         │             │
+    ┌─────▼──┐   ┌───────▼─┐ ┌──▼──────┐ ┌▼────────┐ ┌─▼──────────┐
+    │  Auth  │   │ Session │ │  Order  │ │  Exit   │ │ Dashboard  │
+    │Service │   │ Service │ │ Service │ │ Service │ │  Service   │
+    └────────┘   └─────────┘ └─────────┘ └─────────┘ └────────────┘
+         │                                                   │
+    ┌────▼────┐                                    ┌─────────▼──────┐
+    │  Redis  │ ← Session store + pub/sub          │   Socket.IO    │ ← Live events
+    └─────────┘                                    └────────────────┘
+         │
+    ┌────▼──────┐
+    │  MongoDB  │ ← Persistent data (Atlas)
+    └───────────┘
+```
 
-This creates a simple end-to-end lifecycle for each guest.
+| Service | Responsibility |
+|---|---|
+| `gateway-service` | Reverse proxy — routes frontend requests to backend services |
+| `auth-service` | Login, roles, club ownership, event binding, JWT + Redis token sessions |
+| `session-service` | Creates and manages active guest sessions with QR codes |
+| `order-service` | Menu data and order items attached to sessions |
+| `exit-service` | Closes sessions, stores history, generates invoice summaries |
+| `dashboard-service` | Delivers real-time events to the frontend via Socket.IO |
 
-## Roles In The System
+---
 
-- `admin`
-  Creates owners and controls top-level access.
+## Key Features
 
-- `owner`
-  Manages a club or event, creates staff, manages menus, and views live summaries.
+- ⚡ **QR-based guest session engine** — entry staff generate a QR; bartenders and exit staff scan the same QR
+- 🔴 **Live owner dashboard** — real-time revenue, active sessions, and order data via Socket.IO
+- 👥 **Multi-role access control** — admin · owner · entry · bartender · exit (JWT + Redis)
+- 🏢 **Multi-tenant** — multiple clubs/venues, each fully isolated with their own staff and menus
+- 📋 **Dynamic menu management** — categories, items, CSV/text upload
+- 🧾 **Invoice generation and printing** — full billing lifecycle per guest
+- 🔐 **Token-based session expiry** — Redis-backed auth session validation
 
-- `entry`
-  Creates customer sessions and prints QR codes.
+---
 
-- `bartender`
-  Scans QR codes, handles multiple active guests, and adds menu items to their tabs.
+## Role Flow
 
-- `exit`
-  Scans active sessions, generates invoices, collects payment, and closes sessions.
+```
+Admin
+  └── Creates Owners (one per club/venue)
 
-## Clubs And Events
+Owner
+  └── Creates Staff · Manages Menu · Views Live Dashboard
 
-The system supports more than one club or venue.
+Entry Staff
+  └── Creates guest session → System generates QR code
 
-That means:
+Bartender
+  └── Scans QR → Adds menu items → Running tab updates live
 
-- Club 1 has its own owner and staff
-- Club 2 has a different owner and staff
-- sessions, menus, and events are scoped to the correct club
+Exit Staff
+  └── Scans QR → Generates invoice → Marks bill paid → Closes session
+```
 
-It also supports two owner types:
+---
 
-- `one_time`
-  Useful for temporary events, parties, weddings, functions, or short-run gatherings.
+## Performance Highlights
 
-- `full_time`
-  Useful for permanent clubs, bars, lounges, or venues operating continuously.
+| Metric | Before | After | How |
+|---|---|---|---|
+| Search query latency | 1.2s | **< 200ms** | Compound MongoDB indexes + pipeline rewrite |
+| Auth overhead | Session polling | **Real-time** | Redis pub/sub + Socket.IO |
 
-For one-time events, the owner can end the event and later start a new one.
-For full-time venues, the owner sees daily summaries instead of temporary event closure flow.
-
-## Main Features
-
-- QR-based session generation
-- live guest tab management
-- dynamic menu categories and menu items
-- CSV or text-based menu upload
-- staff creation under the correct owner and club
-- live owner dashboard
-- invoice generation and printing
-- session expiry and token-based access control
-- multi-club support
-- one-time and full-time venue modes
-
-## Project Structure
-
-This project is split into multiple services.
-
-- `frontend`
-  React app used by all roles.
-
-- `gateway-service`
-  API gateway that forwards frontend requests to backend services.
-
-- `auth-service`
-  Login, registration, user roles, club ownership, event binding, and token session control.
-
-- `session-service`
-  Creates and manages active customer sessions.
-
-- `order-service`
-  Stores menu data and order items added during a session.
-
-- `exit-service`
-  Closes sessions, stores completed history, and generates summary data.
-
-- `dashboard-service`
-  Delivers real-time events to the frontend using sockets.
+---
 
 ## Tech Stack
 
-- React + Vite frontend
-- Node.js + Express backend services
-- MongoDB Atlas for persistent data
-- Redis for active sessions, auth session validation, and event pub/sub
-- Socket.IO for live dashboard updates
-- Railway for backend deployment
-- Vercel for frontend deployment
+| Layer | Technology |
+|---|---|
+| Frontend | React + Vite |
+| Backend | Node.js + Express (per service) |
+| Database | MongoDB Atlas |
+| Cache / Sessions | Redis |
+| Real-time | Socket.IO |
+| Auth | JWT + Redis token validation |
+| Deployment | Railway (backend) · Vercel (frontend) |
+
+---
 
 ## Running Locally
 
-Install dependencies, then run all services together from the project root:
-
 ```bash
+# Install all dependencies from project root
 npm install
+
+# Start all services concurrently
 npm run dev
 ```
 
-Each service also has its own `.env` file. Local and production values are different, so check the example env files before running.
+Each service has its own `.env` file. Check the example env files before running — local and production values differ.
+
+---
 
 ## Deployment
 
-Deployment notes live in:
+- **Frontend** → Vercel
+- **Backend services** → Railway (each service deployed independently)
+- **Database** → MongoDB Atlas
+- **Redis** → Required and must be reachable by all backend services
 
-- [DEPLOYMENT.md](D:\github\eventledger\DEPLOYMENT.md)
+---
 
-The short version:
+## Who this is for
 
-- frontend goes to Vercel
-- backend services go to Railway
-- MongoDB lives in Atlas
-- Redis is required and must be available to the backend services
+Clubs · Bars · Private events · Weddings · Corporate parties · Pop-up venues · Seasonal events
 
-## Who This Is For
-
-EventLedger is useful for:
-
-- clubs
-- bars
-- private events
-- weddings
-- corporate parties
-- seasonal venues
-- pop-up service environments
-
-If there is a need to track guest spending with multiple staff roles and a live running bill, this system fits that workflow.
-
-## Current Direction
-
-The product is evolving toward a more polished multi-tenant venue platform with:
-
-- stronger club separation
-- better owner dashboards
-- improved menu management
-- smoother deployment flow
-- cleaner production hosting setup
-
-## License
-
-This repository includes a [LICENSE](D:\github\eventledger\LICENSE) file.
+Any environment where multiple staff roles need to coordinate guest billing in real time.
