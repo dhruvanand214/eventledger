@@ -9,6 +9,7 @@ export default function Exit() {
   const [statusMessage, setStatusMessage] = useState("");
   const [scannerKey, setScannerKey] = useState(0);
   const [showInvoice, setShowInvoice] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
 
   const invoiceData = useMemo(
     () => ({
@@ -40,16 +41,17 @@ export default function Exit() {
 
   const closeSession = async () => {
     if (!session) return;
-
-    await axios.post("/exit/close", {
-      sessionId: session.id
-    });
-
-    setStatusMessage("Payment successful. Session closed.");
-    setSession(null);
-    setTotal(0);
-    setShowInvoice(false);
-    setScannerKey((k) => k + 1);
+    try {
+      setIsClosing(true);
+      await axios.post("/exit/close", { sessionId: session.id });
+      setStatusMessage("Payment successful. Session closed.");
+      setSession(null);
+      setTotal(0);
+      setShowInvoice(false);
+      setScannerKey((k) => k + 1);
+    } finally {
+      setIsClosing(false);
+    }
   };
 
   const printInvoice = () => {
@@ -87,24 +89,31 @@ export default function Exit() {
       <POSLayout
         left={
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-cyan-100/80">Exit Desk</p>
-            <h2 className="mb-4 mt-2 text-xl font-semibold text-white">Scan Customer QR</h2>
-            {statusMessage && <p className="mb-3 rounded-lg bg-emerald-500/20 px-3 py-2 text-sm text-emerald-200">{statusMessage}</p>}
+            <p className="text-[0.65rem] uppercase tracking-[0.2em] text-[#908fa0] font-semibold">Exit Desk</p>
+            <h2 className="mt-2 mb-5 text-xl font-bold gradient-text">Scan Customer QR</h2>
+
+            {statusMessage && (
+              <div className="mb-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 text-sm text-emerald-300">
+                {statusMessage}
+              </div>
+            )}
+
             <QRScanner key={scannerKey} onScan={scanSuccess} />
 
-            <div className="mt-4 flex flex-wrap gap-3">
+            <div className="mt-5 flex flex-wrap gap-3">
               {session && (
                 <button
-                  className="rounded-lg bg-cyan-500 px-4 py-2 text-white hover:bg-cyan-600"
+                  id="exit-scan-another-btn"
+                  className="btn-ghost"
                   onClick={() => setScannerKey((k) => k + 1)}
                 >
                   Scan Another QR
                 </button>
               )}
-
               {session && (
                 <button
-                  className="rounded-lg bg-indigo-500 px-4 py-2 text-white hover:bg-indigo-600"
+                  id="exit-generate-invoice-btn"
+                  className="btn-primary"
                   onClick={() => setShowInvoice(true)}
                 >
                   Generate Invoice
@@ -114,48 +123,97 @@ export default function Exit() {
           </div>
         }
         right={
-          <div className="text-white">
-            {!session && <h2 className="text-white/75">No active session</h2>}
+          <div className="text-[#e4dfff]">
+            <p className="text-[0.65rem] uppercase tracking-[0.2em] text-[#908fa0] font-semibold">Customer Bill</p>
+
+            {!session && (
+              <div className="mt-8 flex flex-col items-center justify-center text-center py-12">
+                <div className="h-16 w-16 rounded-2xl bg-[rgba(52,49,80,0.5)] flex items-center justify-center mb-4">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 17H7A5 5 0 017 7h2M15 17h2a5 5 0 000-10h-2M9 12h6" stroke="#908fa0" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <p className="text-[#c7c4d7] font-medium">No Active Session</p>
+                <p className="text-sm text-[#908fa0] mt-1">Scan a customer QR to load their bill</p>
+              </div>
+            )}
 
             {session && (
-              <>
-                <h2 className="mb-3 text-xl font-semibold">Customer Bill</h2>
-                <p>Name: {session.customerName}</p>
-                <p>Session: {session.id}</p>
-                <div className="mt-6 text-3xl font-bold">Total: Rs {total}</div>
+              <div className="mt-4 animate-slide-up">
+                <div className="rounded-2xl bg-[rgba(41,38,68,0.6)] border border-[rgba(70,69,84,0.3)] p-4 mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="font-semibold text-[#e4dfff]">{session.customerName}</p>
+                      <p className="text-[0.7rem] text-[#908fa0] font-mono mt-0.5">{session.id}</p>
+                    </div>
+                    <span className="chip chip-cyan">Active</span>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl stat-amber border border-[rgba(70,69,84,0.3)] p-6 text-center mb-5">
+                  <p className="text-xs uppercase tracking-wider text-[#908fa0] font-semibold mb-2">Total Bill</p>
+                  <p className="text-4xl font-bold text-amber-300">Rs {total.toLocaleString("en-IN")}</p>
+                </div>
+
                 <button
-                  className="mt-5 rounded-lg bg-rose-600 p-3 text-white hover:bg-rose-700"
+                  id="exit-mark-paid-btn"
+                  className="btn-rose w-full py-3 text-sm"
                   onClick={closeSession}
+                  disabled={isClosing}
                 >
-                  Mark Paid & Close Session
+                  {isClosing ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                      Processing...
+                    </span>
+                  ) : (
+                    "Mark Paid & Close Session"
+                  )}
                 </button>
-              </>
+              </div>
             )}
           </div>
         }
       />
 
       {showInvoice && session && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-6 shadow-2xl text-white">
-            <h2 className="text-xl font-semibold mb-3">Invoice Preview</h2>
-            <p className="text-sm text-white/80 mb-1">Name: {invoiceData.customerName}</p>
-            <p className="text-sm text-white/80 mb-1">Session: {invoiceData.sessionId}</p>
-            <p className="text-sm text-white/80 mb-4">Date: {invoiceData.generatedAt}</p>
-            <p className="text-2xl font-bold mb-5">Total: Rs {invoiceData.total}</p>
+        <div className="modal-backdrop">
+          <div className="modal-panel max-w-md">
+            <h2 className="text-xl font-bold text-[#e4dfff] mb-4">Invoice Preview</h2>
+
+            <div className="rounded-2xl bg-[rgba(52,49,80,0.4)] border border-[rgba(70,69,84,0.3)] p-4 mb-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-[#908fa0]">Customer</span>
+                <span className="text-[#e4dfff] font-medium">{invoiceData.customerName}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-[#908fa0]">Session</span>
+                <span className="text-[#c7c4d7] font-mono text-xs">{invoiceData.sessionId}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-[#908fa0]">Date</span>
+                <span className="text-[#c7c4d7]">{invoiceData.generatedAt}</span>
+              </div>
+              <div className="pt-2 border-t border-[rgba(70,69,84,0.3)] flex justify-between">
+                <span className="font-semibold text-[#c7c4d7]">Total</span>
+                <span className="text-2xl font-bold text-amber-300">Rs {invoiceData.total.toLocaleString("en-IN")}</span>
+              </div>
+            </div>
 
             <div className="flex justify-end gap-3">
               <button
-                className="px-4 py-2 rounded bg-white/20 hover:bg-white/30"
+                id="exit-close-invoice-btn"
+                className="btn-ghost"
                 onClick={() => setShowInvoice(false)}
               >
                 Close
               </button>
               <button
-                className="px-4 py-2 rounded bg-indigo-500 hover:bg-indigo-600"
+                id="exit-print-invoice-btn"
+                className="btn-primary"
                 onClick={printInvoice}
               >
-                Print
+                Print Invoice
               </button>
             </div>
           </div>

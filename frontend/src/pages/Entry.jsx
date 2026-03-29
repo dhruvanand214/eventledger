@@ -75,52 +75,84 @@ export default function Entry() {
     <>
       <div className="mx-auto w-full max-w-xl">
         <GlassCard>
-          <p className="text-xs uppercase tracking-[0.2em] text-cyan-100/80">Entry Desk</p>
-          <h1 className="text-white text-2xl mb-2 mt-2 font-semibold">Create Session</h1>
-          <p className="text-white/80 text-sm mb-5">Enter customer name and generate printable QR.</p>
+          <p className="text-[0.65rem] uppercase tracking-[0.2em] text-[#908fa0] font-semibold">Entry Desk</p>
+          <h1 className="mt-2 text-2xl font-bold gradient-text">Create Session</h1>
+          <p className="mt-1 mb-6 text-sm text-[#c7c4d7]">Enter customer name and generate a printable QR code.</p>
 
-          <input
-            className="p-3 rounded-lg w-full mb-3 bg-white/90 outline-none focus:ring-2 focus:ring-indigo-400"
-            placeholder="Customer Name"
-            value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-          />
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs text-[#c7c4d7] mb-1.5 font-medium">Customer Name</label>
+              <input
+                id="entry-customer-name"
+                className="input-nocturne"
+                placeholder="Enter customer name"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && createSession()}
+              />
+            </div>
 
-          {errorMessage && <p className="text-red-200 text-sm mb-3">{errorMessage}</p>}
+            {errorMessage && (
+              <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 px-4 py-3 text-sm text-rose-300">
+                {errorMessage}
+              </div>
+            )}
 
-          <button
-            className="bg-indigo-500 px-4 py-2.5 rounded-lg text-white font-medium disabled:opacity-60"
-            onClick={createSession}
-            disabled={!canGenerate || isLoading}
-          >
-            {isLoading ? "Generating..." : "Generate QR"}
-          </button>
+            <button
+              id="entry-generate-qr-btn"
+              className="btn-primary w-full py-3"
+              onClick={createSession}
+              disabled={!canGenerate || isLoading}
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  Generating...
+                </span>
+              ) : (
+                "Generate QR Code"
+              )}
+            </button>
+          </div>
         </GlassCard>
       </div>
 
       {qrData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-6 shadow-2xl text-white">
-            <h2 className="text-xl font-semibold mb-2">QR Generated</h2>
-            <p className="text-white/80 text-sm">{qrData.customerName}</p>
-            <p className="text-white/60 text-xs mb-4">Session: {qrData.sessionId}</p>
-
-            <div className="bg-white p-3 rounded-lg inline-block">
-              <img src={qrData.qrCode} alt="Generated QR" className="w-56 h-56" />
+        <div className="modal-backdrop">
+          <div className="modal-panel max-w-md text-center">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-xl font-bold text-[#e4dfff]">QR Generated</h2>
+                <p className="text-sm text-[#c7c4d7] mt-0.5">{qrData.customerName}</p>
+              </div>
+              <span className="chip chip-emerald">
+                <span className="live-dot" />
+                Active
+              </span>
             </div>
 
-            <div className="mt-5 flex items-center justify-end gap-3">
+            <p className="text-[0.7rem] text-[#908fa0] mb-5 font-mono">Session: {qrData.sessionId}</p>
+
+            {/* QR Code */}
+            <div className="inline-block rounded-2xl p-4 mb-6" style={{ background: "white" }}>
+              <img src={qrData.qrCode} alt="Generated QR" className="w-52 h-52 block" />
+            </div>
+
+            <div className="flex items-center justify-end gap-3">
               <button
-                className="px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30"
+                id="entry-close-qr-btn"
+                className="btn-ghost"
                 onClick={closeQrPopup}
               >
                 Close
               </button>
               <button
-                className="px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-600"
+                id="entry-print-qr-btn"
+                className="btn-primary"
                 onClick={printQr}
               >
-                Print
+                Print QR
               </button>
             </div>
           </div>

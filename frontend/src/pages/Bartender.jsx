@@ -209,22 +209,30 @@ export default function Bartender() {
       <POSLayout
         left={
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-cyan-100/80">Bartender Desk</p>
-            <h2 className="mb-4 mt-2 text-xl font-semibold text-white">Scan Customer QR</h2>
-            {statusMessage && <p className="mb-3 rounded-lg bg-emerald-500/20 px-3 py-2 text-sm text-emerald-200">{statusMessage}</p>}
+            <p className="text-[0.65rem] uppercase tracking-[0.2em] text-[#908fa0] font-semibold">Bartender Desk</p>
+            <h2 className="mt-2 mb-5 text-xl font-bold gradient-text">Scan Customer QR</h2>
+
+            {statusMessage && (
+              <div className="mb-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 text-sm text-emerald-300">
+                {statusMessage}
+              </div>
+            )}
+
             <QRScanner key={scannerKey} onScan={scanSuccess} />
 
-            <div className="mt-4 flex flex-wrap gap-3">
+            <div className="mt-5 flex flex-wrap gap-3">
               {sessions.length > 0 && (
                 <button
-                  className="rounded-lg bg-cyan-500 px-4 py-2 text-white hover:bg-cyan-600"
+                  id="bartender-scan-another-btn"
+                  className="btn-ghost"
                   onClick={() => setScannerKey((k) => k + 1)}
                 >
                   Scan Another QR
                 </button>
               )}
               <button
-                className="rounded-lg bg-indigo-500 px-4 py-2 text-white hover:bg-indigo-600"
+                id="bartender-add-item-btn"
+                className="btn-primary"
                 onClick={openAddItemModal}
               >
                 Add Item
@@ -233,25 +241,49 @@ export default function Bartender() {
           </div>
         }
         right={
-          <div className="text-white">
-            <p className="text-xs uppercase tracking-[0.2em] text-cyan-100/80">Live Queue</p>
-            <h2 className="mb-3 mt-2 text-xl font-semibold">Active Customers</h2>
-            {sessions.length === 0 && <p className="text-white/75">No active session</p>}
+          <div className="text-[#e4dfff]">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <p className="text-[0.65rem] uppercase tracking-[0.2em] text-[#908fa0] font-semibold">Live Queue</p>
+                <h2 className="mt-1 text-xl font-bold gradient-text">Active Customers</h2>
+              </div>
+              {sessions.length > 0 && (
+                <span className="chip chip-cyan">
+                  <span className="live-dot" />
+                  {sessions.length} Active
+                </span>
+              )}
+            </div>
 
-            <div className="space-y-3 max-h-[70vh] overflow-auto pr-1">
+            {sessions.length === 0 && (
+              <div className="py-12 flex flex-col items-center justify-center text-center">
+                <div className="h-16 w-16 rounded-2xl bg-[rgba(52,49,80,0.5)] flex items-center justify-center mb-4">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="#908fa0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <p className="text-[#c7c4d7] font-medium">No Active Sessions</p>
+                <p className="text-sm text-[#908fa0] mt-1">Scan a customer QR to get started</p>
+              </div>
+            )}
+
+            <div className="space-y-2 max-h-[60vh] overflow-auto pr-1">
               {sessions.map((s) => (
                 <button
                   key={s.id}
-                  className={`w-full text-left rounded p-3 border ${
+                  id={`bartender-session-${s.id}`}
+                  className={`w-full text-left rounded-2xl p-3.5 border transition-all duration-200 ${
                     selectedSessionId === s.id
-                      ? "border-cyan-200/70 bg-cyan-500/25"
-                      : "border-white/20 bg-white/10"
+                      ? "border-indigo-500/40 bg-indigo-500/10 shadow-[0_0_15px_rgba(99,102,241,0.15)]"
+                      : "border-[rgba(70,69,84,0.3)] bg-[rgba(52,49,80,0.3)] hover:bg-[rgba(52,49,80,0.5)]"
                   }`}
                   onClick={() => setSelectedSessionId(s.id)}
                 >
-                  <p className="font-semibold">{s.customerName}</p>
-                  <p className="text-sm">Session: {s.id}</p>
-                  <p className="text-sm">Total: Rs {Number(s.total || 0)}</p>
+                  <div className="flex items-center justify-between">
+                    <p className="font-semibold text-[#e4dfff]">{s.customerName}</p>
+                    <span className="text-amber-300 font-bold text-sm">Rs {Number(s.total || 0).toLocaleString("en-IN")}</span>
+                  </div>
+                  <p className="text-[0.65rem] text-[#908fa0] font-mono mt-0.5 truncate">{s.id}</p>
                 </button>
               ))}
             </div>
@@ -260,30 +292,37 @@ export default function Bartender() {
       />
 
       {showAddItemModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4">
-          <div className="w-full max-w-3xl rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-6 shadow-2xl text-white">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold">Add Items</h2>
+        <div className="modal-backdrop">
+          <div className="modal-panel max-w-3xl w-full">
+            <div className="flex justify-between items-center mb-5">
+              <div>
+                <h2 className="text-xl font-bold text-[#e4dfff]">Add Items</h2>
+                <p className="text-sm text-[#c7c4d7] mt-0.5">
+                  {selectedSession?.customerName}
+                  <span className="text-[#908fa0] font-mono text-xs ml-2">({selectedSession?.id})</span>
+                </p>
+              </div>
               <button
-                className="rounded-lg bg-white/20 px-3 py-1 hover:bg-white/30"
+                id="bartender-close-modal-btn"
+                className="btn-ghost text-xs px-3 py-1.5"
                 onClick={() => setShowAddItemModal(false)}
               >
                 Close
               </button>
             </div>
 
-            <p className="text-white/80 text-sm mb-4">
-              Customer: {selectedSession?.customerName} ({selectedSession?.id})
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <h3 className="font-semibold">Categories</h3>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+              {/* Categories */}
+              <div className="space-y-1.5">
+                <p className="text-xs uppercase tracking-wider text-[#908fa0] font-semibold mb-3">Categories</p>
                 {categoryList.map((category) => (
                   <button
                     key={category}
-                    className={`w-full text-left rounded-lg px-3 py-2 ${
-                      selectedCategory === category ? "bg-cyan-500" : "bg-white/20"
+                    id={`bartender-category-${category}`}
+                    className={`w-full text-left rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                      selectedCategory === category
+                        ? "bg-indigo-500/20 border border-indigo-500/30 text-indigo-300"
+                        : "bg-[rgba(52,49,80,0.4)] border border-[rgba(70,69,84,0.2)] text-[#c7c4d7] hover:bg-[rgba(52,49,80,0.7)]"
                     }`}
                     onClick={() => setSelectedCategory(category)}
                   >
@@ -292,63 +331,80 @@ export default function Bartender() {
                 ))}
               </div>
 
-              <div className="space-y-2 md:col-span-1">
-                <h3 className="font-semibold">Items</h3>
-                {(groupedMenu[selectedCategory] || []).map((item) => (
-                  <button
-                    key={item._id}
-                    className="w-full text-left rounded-lg bg-cyan-500/80 px-3 py-2 hover:bg-cyan-500"
-                    onClick={() => addDraftItem(item)}
-                  >
-                    {item.itemName} - Rs {item.price}
-                  </button>
-                ))}
+              {/* Items */}
+              <div className="space-y-1.5">
+                <p className="text-xs uppercase tracking-wider text-[#908fa0] font-semibold mb-3">Items</p>
+                <div className="space-y-1.5 max-h-64 overflow-auto pr-1">
+                  {(groupedMenu[selectedCategory] || []).map((item) => (
+                    <button
+                      key={item._id}
+                      id={`bartender-item-${item._id}`}
+                      className="w-full text-left rounded-xl px-3 py-2.5 bg-[rgba(99,102,241,0.1)] border border-indigo-500/20 hover:bg-indigo-500/20 hover:border-indigo-500/30 transition-all duration-200"
+                      onClick={() => addDraftItem(item)}
+                    >
+                      <p className="text-sm font-medium text-[#e4dfff]">{item.itemName}</p>
+                      <p className="text-xs text-amber-300 font-semibold mt-0.5">Rs {Number(item.price).toLocaleString("en-IN")}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="space-y-2 md:col-span-1">
-                <h3 className="font-semibold">Summary</h3>
-                <div className="max-h-56 overflow-auto pr-1">
-                  {summaryRows.length === 0 && <p className="text-white/70 text-sm">No items selected.</p>}
+              {/* Summary */}
+              <div>
+                <p className="text-xs uppercase tracking-wider text-[#908fa0] font-semibold mb-3">Order Summary</p>
+                <div className="space-y-1.5 max-h-52 overflow-auto pr-1">
+                  {summaryRows.length === 0 && (
+                    <p className="text-sm text-[#908fa0] italic">No items selected yet.</p>
+                  )}
                   {Object.entries(draftItems).map(([key, row]) => (
-                    <div key={key} className="py-2 border-b border-white/20">
-                      <p>{row.itemName}</p>
-                      <div className="flex items-center justify-between mt-1">
+                    <div key={key} className="rounded-xl bg-[rgba(52,49,80,0.4)] border border-[rgba(70,69,84,0.3)] p-3">
+                      <p className="text-sm font-medium text-[#e4dfff] mb-2">{row.itemName}</p>
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <button
-                            className="w-7 h-7 rounded bg-white/20"
+                            className="w-7 h-7 rounded-lg bg-[rgba(52,49,80,0.7)] text-[#c7c4d7] hover:bg-indigo-500/20 transition-colors text-sm font-bold"
                             onClick={() => updateQuantity(key, -1)}
                           >
-                            -
+                            −
                           </button>
-                          <span>{row.quantity}</span>
+                          <span className="text-sm font-semibold text-[#e4dfff] w-5 text-center">{row.quantity}</span>
                           <button
-                            className="w-7 h-7 rounded bg-white/20"
+                            className="w-7 h-7 rounded-lg bg-[rgba(52,49,80,0.7)] text-[#c7c4d7] hover:bg-indigo-500/20 transition-colors text-sm font-bold"
                             onClick={() => updateQuantity(key, 1)}
                           >
                             +
                           </button>
                         </div>
-                        <span className="text-sm">Rs {row.quantity * row.price}</span>
+                        <span className="text-sm font-bold text-amber-300">Rs {(row.quantity * row.price).toLocaleString("en-IN")}</span>
                       </div>
                     </div>
                   ))}
                 </div>
-                <p className="font-semibold mt-2">Total: Rs {summaryTotal}</p>
+
+                {summaryRows.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-[rgba(70,69,84,0.3)] flex justify-between items-center">
+                    <span className="text-sm text-[#c7c4d7] font-semibold">Total</span>
+                    <span className="text-lg font-bold text-amber-300">Rs {summaryTotal.toLocaleString("en-IN")}</span>
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="mt-5 flex justify-end gap-3">
-                <button
-                className="rounded-lg bg-white/20 px-4 py-2 hover:bg-white/30"
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                id="bartender-clear-items-btn"
+                className="btn-ghost"
                 onClick={() => setDraftItems({})}
               >
                 Clear
               </button>
               <button
-                className="rounded-lg bg-indigo-500 px-4 py-2 hover:bg-indigo-600"
+                id="bartender-confirm-items-btn"
+                className="btn-primary"
                 onClick={confirmAddItems}
+                disabled={summaryRows.length === 0}
               >
-                Done
+                Confirm Order
               </button>
             </div>
           </div>
